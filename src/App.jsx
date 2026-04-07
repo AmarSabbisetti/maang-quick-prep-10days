@@ -315,10 +315,18 @@ const diffColor = (d) =>
 
 function App() {
   const [tab, setTab] = useState("dsa");
-  const [statuses, setStatuses] = useState({});
-  const [sdStatuses, setSdStatuses] = useState({});
-  const [lldStatuses, setLldStatuses] = useState({});
-  const [stackStatuses, setStackStatuses] = useState({});
+  const [statuses, setStatuses] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("statuses")) || {}; } catch { return {}; }
+  });
+  const [sdStatuses, setSdStatuses] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("sdStatuses")) || {}; } catch { return {}; }
+  });
+  const [lldStatuses, setLldStatuses] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("lldStatuses")) || {}; } catch { return {}; }
+  });
+  const [stackStatuses, setStackStatuses] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("stackStatuses")) || {}; } catch { return {}; }
+  });
   const [expandedStack, setExpandedStack] = useState({});
   const [mockMode, setMockMode] = useState(false);
   const [mockType, setMockType] = useState(null);
@@ -336,6 +344,11 @@ function App() {
     }
     if (timer === 0 && timerRunning) setTimerRunning(false);
   }, [timerRunning, timer]);
+
+  useEffect(() => { localStorage.setItem("statuses", JSON.stringify(statuses)); }, [statuses]);
+  useEffect(() => { localStorage.setItem("sdStatuses", JSON.stringify(sdStatuses)); }, [sdStatuses]);
+  useEffect(() => { localStorage.setItem("lldStatuses", JSON.stringify(lldStatuses)); }, [lldStatuses]);
+  useEffect(() => { localStorage.setItem("stackStatuses", JSON.stringify(stackStatuses)); }, [stackStatuses]);
 
   const toggleStatus = (key) => {
     setStatuses((prev) => {
