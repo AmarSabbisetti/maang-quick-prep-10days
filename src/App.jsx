@@ -1,4 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
+import { db } from "./firebase";
+import { ref, set, get } from "firebase/database";
 
 const CATEGORIES = {
   "Arrays & Hashing": {
@@ -315,18 +317,11 @@ const diffColor = (d) =>
 
 function App() {
   const [tab, setTab] = useState("dsa");
-  const [statuses, setStatuses] = useState(() => {
-    try { return JSON.parse(localStorage.getItem("statuses")) || {}; } catch { return {}; }
-  });
-  const [sdStatuses, setSdStatuses] = useState(() => {
-    try { return JSON.parse(localStorage.getItem("sdStatuses")) || {}; } catch { return {}; }
-  });
-  const [lldStatuses, setLldStatuses] = useState(() => {
-    try { return JSON.parse(localStorage.getItem("lldStatuses")) || {}; } catch { return {}; }
-  });
-  const [stackStatuses, setStackStatuses] = useState(() => {
-    try { return JSON.parse(localStorage.getItem("stackStatuses")) || {}; } catch { return {}; }
-  });
+  const [statuses, setStatuses] = useState({});
+  const [sdStatuses, setSdStatuses] = useState({});
+  const [lldStatuses, setLldStatuses] = useState({});
+  const [stackStatuses, setStackStatuses] = useState({});
+  const [loaded, setLoaded] = useState(false);
   const [expandedStack, setExpandedStack] = useState({});
   const [mockMode, setMockMode] = useState(false);
   const [mockType, setMockType] = useState(null);
@@ -345,10 +340,25 @@ function App() {
     if (timer === 0 && timerRunning) setTimerRunning(false);
   }, [timerRunning, timer]);
 
-  useEffect(() => { localStorage.setItem("statuses", JSON.stringify(statuses)); }, [statuses]);
-  useEffect(() => { localStorage.setItem("sdStatuses", JSON.stringify(sdStatuses)); }, [sdStatuses]);
-  useEffect(() => { localStorage.setItem("lldStatuses", JSON.stringify(lldStatuses)); }, [lldStatuses]);
-  useEffect(() => { localStorage.setItem("stackStatuses", JSON.stringify(stackStatuses)); }, [stackStatuses]);
+  // Load all statuses from Firebase once on mount
+  useEffect(() => {
+    get(ref(db, "progress")).then((snapshot) => {
+      if (snapshot.exists()) {
+        const data = snapshot.val();
+        if (data.statuses) setStatuses(data.statuses);
+        if (data.sdStatuses) setSdStatuses(data.sdStatuses);
+        if (data.lldStatuses) setLldStatuses(data.lldStatuses);
+        if (data.stackStatuses) setStackStatuses(data.stackStatuses);
+      }
+      setLoaded(true);
+    });
+  }, []);
+
+  // Save to Firebase on change (only after initial load)
+  useEffect(() => { if (loaded) set(ref(db, "progress/statuses"), statuses); }, [statuses, loaded]);
+  useEffect(() => { if (loaded) set(ref(db, "progress/sdStatuses"), sdStatuses); }, [sdStatuses, loaded]);
+  useEffect(() => { if (loaded) set(ref(db, "progress/lldStatuses"), lldStatuses); }, [lldStatuses, loaded]);
+  useEffect(() => { if (loaded) set(ref(db, "progress/stackStatuses"), stackStatuses); }, [stackStatuses, loaded]);
 
   const toggleStatus = (key) => {
     setStatuses((prev) => {
